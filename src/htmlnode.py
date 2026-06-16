@@ -11,7 +11,7 @@ class HTMLNode:
         self.children: list["HTMLNode"] | None = children
         self.props: dict[str, str] | None = props
 
-    def to_html(self):
+    def to_html(self) -> str:
         raise NotImplementedError
     
     def props_to_html(self) -> str:
@@ -23,7 +23,7 @@ class HTMLNode:
             props_as_html += f' {attribute}="{value}"'
         return props_as_html
     
-    def __children_to_str(self, level: int) -> str:
+    def _children_to_str(self, level: int = 2) -> str:
         if self.children is None:
             return "None"
         
@@ -33,11 +33,11 @@ class HTMLNode:
 
         opening = "[\n"
         for child in self.children:
-            child_lines.append(tab + child.__format_node_string(level + 1))
+            child_lines.append(tab + child._format_node_string(level + 1))
         closing = "\n" + outer_tab + "]"
         return opening + ",\n".join(child_lines) + closing
     
-    def __props_to_str(self, level: int) -> str:
+    def _props_to_str(self, level: int = 2) -> str:
         if self.props is None:
             return "None"
         
@@ -51,7 +51,10 @@ class HTMLNode:
         closing = "\n" + outer_tab + "}"
         return opening + ",\n".join(lines) + closing
     
-    def __format_node_string(self, level: int = 1) -> str:
+    def _format_node_string(self, level: int = 1) -> str:
+        if self.children is None:
+            return f"HTMLNode({self.tag}, {self.value}, {self.children}, {self.props})"
+
         tab = " " * 2 * level 
         outer_tab = " " * 2 * (level - 1)
         lines: list[str] = []
@@ -59,10 +62,44 @@ class HTMLNode:
         opening = "HTMLNode(\n"
         lines.append(tab + str(self.tag))
         lines.append(tab + str(self.value))
-        lines.append(tab + self.__children_to_str(level + 1))
-        lines.append(tab + self.__props_to_str(level + 1)) 
+        lines.append(tab + self._children_to_str(level + 1))
+        lines.append(tab + self._props_to_str(level + 1)) 
         closing = "\n" + outer_tab + ")"
         return opening + ",\n".join(lines) + closing
 
     def __repr__(self) -> str:
-        return self.__format_node_string()
+        return self._format_node_string()
+    
+class LeafNode(HTMLNode):
+    def __init__(self, tag: str | None, value: str, props: dict[str, str] | None = None) -> None:
+        super().__init__(tag, value, None, props)
+
+    def to_html(self) -> str:
+        if self.value is None:
+            raise ValueError("leaf node must have a value")
+        if self.tag is None:
+            return self.value
+        opening = f"<{self.tag}{self.props_to_html()}>"
+        closing = f"</{self.tag}>"
+        return opening + self.value + closing
+    
+    def _format_node_string(self, level: int = 1) -> str:
+        return str(self)
+
+    def __repr__(self) -> str:
+        return f"LeafNode({self.tag}, {self.value}, {self.props})"
+    
+class ParentNode(HTMLNode):
+    def __init__(self, tag: str, children: list[HTMLNode], props: dict[str, str] | None = None) -> None:
+        super().__init__(tag, None, children, props)
+
+    def to_html(self) -> str:
+        if self.tag is None:
+            raise ValueError("parent node must have a tag")
+        if self.children is None:
+            raise ValueError("parent node must have a child")
+        
+        html_string = f"<{self.tag}{self.props_to_html()}>"
+        for child in self.children:
+            html_string += child.to_html()
+        return html_string + f"</{self.tag}>"
