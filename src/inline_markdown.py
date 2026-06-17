@@ -42,3 +42,52 @@ def extract_markdown_images(text: str) -> list[tuple[str, str]]:
 
 def extract_markdown_links(text: str) -> list[tuple[str, str]]:
     return re.findall(r"(?<!!)\[([^\[\]]*)\]\(([^\(\)]*)\)", text)
+
+def split_nodes_image(old_nodes: list[TextNode]) -> list[TextNode]:
+    new_nodes: list[TextNode] = []
+    for node in old_nodes:
+        if node.text_type != TextType.TEXT:
+            new_nodes.append(node)
+            continue
+
+        images: list[tuple[str, str]] = extract_markdown_images(node.text)
+        split_nodes: list[TextNode] = []
+        remaining = node.text
+        for text, url in images:
+            sections = remaining.split(f"![{text}]({url})", 1)
+            if len(sections) != 2:
+                raise ValueError(f"invalid markdown: image section not closed")
+            current, remaining = sections[0], sections[1]
+
+            if current != "":
+                split_nodes.append(TextNode(current, TextType.TEXT))
+            split_nodes.append(TextNode(text, TextType.IMAGE, url))
+
+        if remaining != "":
+            split_nodes.append(TextNode(remaining, TextType.TEXT))
+    return new_nodes
+
+def split_nodes_link(old_nodes: list[TextNode]) -> list[TextNode]:
+    new_nodes: list[TextNode] = []
+    for node in old_nodes:
+        if node.text_type != TextType.TEXT:
+            new_nodes.append(node)
+            continue
+
+        links: list[tuple[str, str]] = extract_markdown_links(node.text)
+        split_nodes: list[TextNode] = []
+        remaining = node.text
+        for text, url in links:
+            sections = remaining.split(f"[{text}]({url})", 1)
+            if len(sections) != 2:
+                    raise ValueError(f"invalid markdown: link section not closed")
+            current, remaining = sections[0], sections[1]
+
+            if current != "":
+                split_nodes.append(TextNode(current, TextType.TEXT))
+            split_nodes.append(TextNode(text, TextType.LINK, url))
+
+        if remaining != "":
+            split_nodes.append(TextNode(remaining, TextType.TEXT))
+        new_nodes.extend(split_nodes)
+    return new_nodes
