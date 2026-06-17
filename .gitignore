@@ -1,6 +1,9 @@
 # Unit tests
 test*.*
 
+# Generated files
+public/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
