@@ -95,8 +95,9 @@ def split_nodes_link(old_nodes: list[TextNode]) -> list[TextNode]:
 
 def text_to_textnodes(text: str) -> list[TextNode]:
     node = TextNode(text, TextType.TEXT)
-    bold = split_nodes_delimiter([node], "**", TextType.BOLD)
-    italic= split_nodes_delimiter(bold, "_", TextType.ITALIC)
-    code= split_nodes_delimiter(italic, "`", TextType.CODE)
-    image= split_nodes_image(code)
-    return split_nodes_link(image)
+    image = split_nodes_image([node])
+    link = split_nodes_link(image)
+    bold = split_nodes_delimiter(link, "**", TextType.BOLD)
+    italic = split_nodes_delimiter(bold, "_", TextType.ITALIC)
+    code = split_nodes_delimiter(italic, "`", TextType.CODE)
+    return split_nodes_link(code)
