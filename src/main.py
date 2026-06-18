@@ -1,8 +1,12 @@
-from textnode import TextNode, TextType
+from copystatic import remove_dir_contents, copy_directory_recursive
+
+static_path = "./static"
+public_path = "./public"
 
 def main() -> None:
-    node = TextNode("This is some anchor text", TextType.LINK, "https://www.boot.dev")
-    print(node)
+    remove_dir_contents(public_path)
+    print()
+    copy_directory_recursive(static_path, public_path)
 
 if __name__ == "__main__":
     main()
