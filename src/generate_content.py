@@ -18,8 +18,8 @@ def generate_page(from_path: str, template_path: str, dest_path: str | Path):
 
     title: str = extract_title(markdown)
     content: str = markdown_to_html_node(markdown).to_html()
-    full_html = template.replace("{{ Title }}", title)
-    full_html = template.replace("{{ Content }}", content)
+    with_title = template.replace("{{ Title }}", title)
+    full_html = with_title.replace("{{ Content }}", content)
 
     dest_dir = os.path.dirname(dest_path)
     if dest_dir != "":
