@@ -2,6 +2,9 @@ import os
 import shutil
 
 def remove_dir_contents(dir_path: str) -> None:
+    if not os.path.exists(dir_path):
+        os.mkdir(dir_path)
+        
     destination_contents: list[str] = os.listdir(dir_path)
     for path in destination_contents:
         path = os.path.join(dir_path, path)

@@ -9,7 +9,7 @@ def extract_title(markdown: str) -> str:
             return line.removeprefix("# ").strip()
     raise ValueError("markdown file missing h1 header")
 
-def generate_page(from_path: str, template_path: str, dest_path: str | Path):
+def generate_page(basepath: str, from_path: str, template_path: str, dest_path: str | Path):
     print(f"Generating webpage from {from_path} to {dest_path} using {template_path}")
     with open(from_path, "r") as md_file:
         markdown = md_file.read()
@@ -19,7 +19,9 @@ def generate_page(from_path: str, template_path: str, dest_path: str | Path):
     title: str = extract_title(markdown)
     content: str = markdown_to_html_node(markdown).to_html()
     with_title = template.replace("{{ Title }}", title)
-    full_html = with_title.replace("{{ Content }}", content)
+    with_content = with_title.replace("{{ Content }}", content)
+    replace_links = with_content.replace('href="/', f'href="{basepath}')
+    full_html = replace_links.replace('src="/', f'src="{basepath}')
 
     dest_dir = os.path.dirname(dest_path)
     if dest_dir != "":
@@ -28,12 +30,12 @@ def generate_page(from_path: str, template_path: str, dest_path: str | Path):
     with open(dest_path, "w") as webpage:
         webpage.write(full_html)
 
-def generate_pages_recursively(dir_path_content: str, template_path: str, dest_dir_path: str) -> None:
+def generate_pages_recursively(basepath: str, dir_path_content: str, template_path: str, dest_dir_path: str) -> None:
     for filename in os.listdir(dir_path_content):
         from_path = os.path.join(dir_path_content, filename)
         dest_path = os.path.join(dest_dir_path, filename)
         if os.path.isfile(from_path):
             dest_path = Path(dest_path).with_suffix(".html")
-            generate_page(from_path, template_path, dest_path)
+            generate_page(basepath, from_path, template_path, dest_path)
         else:
-            generate_pages_recursively(from_path, template_path, dest_path)
+            generate_pages_recursively(basepath, from_path, template_path, dest_path)
